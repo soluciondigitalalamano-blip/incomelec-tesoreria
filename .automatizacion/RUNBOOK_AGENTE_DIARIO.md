@@ -2,7 +2,7 @@
 
 Este documento es la instrucción completa para la tarea programada que revisa el
 correo, actualiza el panel diario, lo publica, avisa a gerencia, envía el correo
-a tesorería y lo deja registrado en la Bitácora de Notion.
+a tesorería y marca la entrega en la Bitácora de Notion.
 Cada ejecución arranca en una sesión nueva y sin memoria: todo lo necesario está aquí.
 
 **Zona horaria de referencia: America/Bogota (UTC-05:00).**
@@ -244,11 +244,15 @@ no se envía nada.
 
 ---
 
-## Paso 6 · Registrar en la Bitácora de Notion y dejarlo chuleado
+## Paso 6 · Marcar la entrega en la Bitácora de Notion
 
-Después de enviar el correo, y **solo si el correo salió**, registra la entrega en
-la Bitácora. Si el Paso 0 terminó en silencio, o si la actualización, la
-publicación o el correo fallaron, **no escribas nada en Notion**.
+Después de enviar el correo, y **solo si el correo salió**, marca la entrega en la
+Bitácora. Si el Paso 0 terminó en silencio, o si la actualización, la publicación
+o el correo fallaron, **no escribas nada en Notion**.
+
+**Nunca creas filas nuevas en la Bitácora.** El panel diario se marca subiendo el
+contador de la fila del ciclo del mes, que ya existe. Eso es todo lo que hay que
+hacer.
 
 Base de datos: `LIDATO QUEST · Bitácora`
 (ruta: Miguel Andres / Personal / Empresa / Panel informativo)
@@ -258,7 +262,7 @@ Base de datos: `LIDATO QUEST · Bitácora`
 | `data_source_id` / tabla SQL | `collection://4204c6f8-c23f-8158-bae8-000bdfbb3f41` |
 | `database_id` | `4204c6f8-c23f-817c-b300-d2072cbfa25e` |
 
-### 6.1 · Saca la fecha del día (la misma del correo)
+### 6.1 · Busca la fila del ciclo del mes
 
 ```
 python3 -c "
@@ -267,87 +271,80 @@ d=datetime.datetime.now(zoneinfo.ZoneInfo('America/Bogota'))
 print(d.strftime('%Y-%m-%d'), d.strftime('%Y-%m'))"
 ```
 
-La primera salida es la fecha de la fila (`2026-11-24`); la segunda es el ciclo
-(`2026-11`). **No uses el reloj del sistema sin la zona**: está en UTC y de noche
-ya marca el día siguiente.
-
-El nombre de la fila es siempre:
-
-```
-INCOMELEC · Panel Diario de Tesorería · <YYYY-MM-DD>
-```
-
-### 6.2 · Primero comprueba si la fila del día ya existe
-
-Esto es obligatorio y es lo que evita filas repetidas: los cinco agentes
-comparten el mismo día, y una corrida puede repetirse.
+La primera salida es la fecha de hoy; la segunda es el ciclo. **No uses el reloj
+del sistema sin la zona**: está en UTC y de noche ya marca el día siguiente.
 
 ```sql
-SELECT url, "Acuse enviado"
+SELECT url, "Hecho", "Total", "Estado", "date:Fecha:start"
 FROM "collection://4204c6f8-c23f-8158-bae8-000bdfbb3f41"
-WHERE "Registro" = 'INCOMELEC · Panel Diario de Tesorería · <YYYY-MM-DD>'
+WHERE "Registro" = 'INCOMELEC · Informe Diario de Tesorería · <YYYY-MM>'
 ```
 
-| Lo que devuelve | Qué haces |
+En noviembre de 2026 esa es la fila **N.º 44**, con `Hecho` 15 y `Total` 19.
+
+Si la fila no existe —mes nuevo y nadie la creó todavía— **no la crees y no
+inventes el `Total`.** Avisa por notificación al dueño que falta la fila del ciclo
+`<YYYY-MM>` para que la cree. El correo ya salió y eso no se deshace.
+
+### 6.2 · El campo `Fecha` de esa fila dice cuál fue el último día marcado
+
+Compáralo con la fecha de hoy antes de tocar nada:
+
+| `Fecha` de la fila | Qué haces |
 |---|---|
-| Una fila con `Acuse enviado` = `__YES__` | **Nada.** Ya quedó registrado y chuleado. No crees otra fila |
-| Una fila con `Acuse enviado` = `__NO__` | Solo márcala: `update_page` con `{"Acuse enviado": "__YES__"}` |
-| Ninguna fila | Créala como dice el 6.3 |
+| Igual a hoy | **Nada.** Hoy ya está marcado. No toques `Hecho` |
+| Distinta de hoy, o vacía | Márcalo como dice el 6.3 |
 
-Nunca crees la fila sin haber hecho esta consulta.
+Esta comparación es OBLIGATORIA y es lo único que evita contar dos veces el mismo
+día: los cinco agentes comparten la misma jornada y una corrida puede repetirse.
+**Nunca subas `Hecho` sin haber hecho esta comparación.**
 
-### 6.3 · Crear la fila del día
+### 6.3 · Marcar la entrega
 
-`notion-create-pages` con `parent: {"type":"data_source_id","data_source_id":"4204c6f8-c23f-8158-bae8-000bdfbb3f41"}`
-y estas propiedades, con los nombres exactos:
+`notion-update-page` con `command: "update_properties"` sobre esa fila:
 
 | Propiedad | Valor |
 |---|---|
-| `Registro` | `INCOMELEC · Panel Diario de Tesorería · <YYYY-MM-DD>` |
-| `Tipo` | `Entrega del ciclo` |
-| `Cliente` | `INCOMELEC` |
-| `Cadencia` | `Diario` |
-| `Estado` | `Entregado a tiempo` |
-| `date:Fecha:start` | `<YYYY-MM-DD>` |
+| `Hecho` | el valor que acabas de leer **más 1** |
+| `date:Fecha:start` | la fecha de hoy (`<YYYY-MM-DD>`) |
 | `date:Fecha:is_datetime` | `0` (el número cero, sin comillas) |
-| `Acuse enviado` | `__YES__` |
-| `Canal` | `Correo` |
-| `Fuente` | `Agente` |
-| `Ciclo` | `<YYYY-MM>` |
-| `ID LIDATO QUEST` | `INF-18` |
-| `Enlace` | `https://tesoreria-prueba.lidato.site/` |
-| `Actualizado por` | `Agente automático del panel diario` |
-| `Detalle` | `Panel diario publicado con el corte del <DD de Mes> y correo enviado a tesoreria@incomelec.com.` |
 
-Los valores de `Tipo`, `Cliente`, `Cadencia`, `Estado`, `Canal`, `Fuente` y `Ciclo`
-son listas de selección: escríbelos **tal cual** están en la tabla. Si inventas un
-texto distinto, Notion crea una opción nueva y ensucia la base.
+Sobre `Hecho`: es **+1 y solamente +1**, a partir del valor leído en el 6.1. No lo
+recalcules contando días hábiles del calendario, no lo deduzcas de la fecha y no
+lo pongas en un número «que debería ser». Si el mes tuvo un día sin entrega, el
+contador se queda atrás a propósito: eso es justamente lo que se quiere ver.
 
-`Acuse enviado` es la casilla —el chulito—. Se escribe `"__YES__"`, no `true`.
+Además:
 
-### 6.4 · El contador mensual NO se toca
+- Si el nuevo `Hecho` queda **igual** a `Total`, el ciclo está completo: pon
+  `Estado` = `Entregado a tiempo` y `Acuse enviado` = `__YES__`.
+- Si el nuevo `Hecho` sigue **por debajo** de `Total`, deja `Estado` en `Parcial`
+  y no toques `Acuse enviado`.
+- Si el nuevo `Hecho` **pasaría** de `Total`, **no escribas nada**: algo no cuadra
+  (un festivo de más, un `Total` mal puesto). Deja la fila como está y avísalo.
 
-Existe una fila aparte, `INCOMELEC · Informe Diario de Tesorería · <YYYY-MM>`
-(en noviembre de 2026 es la N.º 44), con `Hecho` y `Total`. **Ese contador se
-mantiene por fuera del agente y el agente no lo modifica.** Al 24 de noviembre
-de 2026 ya venía en `15 / 19`, que es el número correcto de días hábiles del mes
-hasta esa fecha; si el agente lo subiera, contaría un día de más.
+No cambies ninguna otra propiedad de esa fila.
 
-No escribas en esa fila, no cambies su `Estado` y no toques su `Fecha`.
+### 6.4 · Verifica y repórtalo
 
-### 6.5 · Verifica y repórtalo
-
-Después de crear o chulear, vuelve a correr la consulta del 6.2 y comprueba que
-hay **exactamente una** fila para ese día y que `Acuse enviado` es `__YES__`.
+Vuelve a leer la fila y comprueba dos cosas: que `Hecho` subió exactamente uno
+respecto al valor que leíste, y que `Fecha` quedó en la de hoy.
 
 En la notificación del Paso 4 (o en un aviso corto después) di en una línea qué
-pasó en la Bitácora: `fila creada y chuleada`, `ya estaba chuleada, no se duplicó`,
-o el error si Notion no respondió.
+pasó: `contador 15 → 16`, `ya estaba marcado hoy, no se tocó`, o el error si Notion
+no respondió.
 
 Si Notion no está disponible o la escritura falla, **no reintentes en bucle ni
-deshagas el correo**: el correo ya salió y eso es lo importante. Avisa al dueño
-que falta el registro en la Bitácora del día `<YYYY-MM-DD>` para que lo marque a
-mano.
+deshagas el correo**: el correo ya salió y eso es lo importante. Avisa al dueño que
+falta marcar el día `<YYYY-MM-DD>` en la fila del ciclo para que lo suba a mano.
+
+### 6.5 · Estado al momento de dejar esto escrito
+
+Al 24 de noviembre de 2026 la fila N.º 44 quedó en `Hecho` 15, `Total` 19,
+`Estado` `Parcial` y `Fecha` `2026-11-24`. El 24 es el día hábil número 15 del mes
+(descontando el 2 y el 16, que son festivos), así que ese 15 ya incluye la entrega
+del 24. La siguiente entrega, la del 25 de noviembre, es la que sube el contador a
+16.
 
 ---
 
@@ -357,8 +354,8 @@ mano.
 |---|---|
 | Panel ya tiene el corte de hoy | Termina en silencio |
 | No llegó el correo con el Excel de hoy | Termina en silencio |
-| Llegó el Excel con fecha posterior al corte publicado | Actualiza, publica, avisa, envía el correo y registra en la Bitácora |
+| Llegó el Excel con fecha posterior al corte publicado | Actualiza, publica, avisa, envía el correo y sube el contador de la Bitácora |
 | El Excel tiene fecha anterior al corte publicado | No publica. Avisa al dueño y **no** envía el correo |
 | Falla la actualización o el push | Avisa el error, **no** envía el correo y **no** escribe en la Bitácora |
-| El correo salió pero Notion falla | Avisa que falta el registro del día. No reintenta en bucle ni reenvía el correo |
-| La fila del día ya está chuleada en la Bitácora | No crea otra. Termina sin duplicar |
+| El correo salió pero Notion falla | Avisa que falta marcar el día. No reintenta en bucle ni reenvía el correo |
+| La fila del ciclo ya tiene la fecha de hoy | Hoy ya estaba marcado. No vuelve a contar |
