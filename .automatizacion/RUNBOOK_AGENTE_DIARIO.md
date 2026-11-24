@@ -135,9 +135,23 @@ fuente usado, qué rutas se publicaron, y el resumen de la reconciliación
 raro: saldos repetidos, bloques sueltos, pagos sin línea en la solicitud).
 Esos hallazgos van **solo aquí**, nunca dentro del HTML.
 
-## Paso 5 · Enviar el correo a gerencia
+## Paso 5 · El correo a gerencia
 
-Solo si el Paso 3 terminó bien.
+**Estado actual: la tarea programada NO envía ni redacta este correo.** No tiene
+permiso para escribir correo a terceros sin el dueño presente, y ese permiso se
+habilita en la configuración de la cuenta, no cambiando este texto. No intentes
+enviarlo ni dejarlo como borrador: la llamada será rechazada y la corrida quedará
+a medias.
+
+Lo que sí hace la tarea: en la notificación del Paso 4, incluir al final una línea
+exactamente así, para que el dueño lo envíe desde el chat con una sola indicación:
+
+```
+CORREO LISTO · Para: josefelixlizalde@incomelec.com · Asunto: Actualización informe tesoreria · Corte: <DD> de <Mes>
+```
+
+Cuando el envío automático quede habilitado, esto es lo que hay que ejecutar, y
+solo si el Paso 3 terminó bien.
 
 - **Para:** `josefelixlizalde@incomelec.com`
 - **Asunto:** `Actualización informe tesoreria`
