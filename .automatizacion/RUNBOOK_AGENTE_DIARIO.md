@@ -166,6 +166,36 @@ push fallaron, no se envía nada, porque anunciaría algo que no se publicó.
 - **Asunto:** `Actualización informe tesoreria`
 - **Cuerpo HTML:** el contenido de `.automatizacion/correo-aviso.html`.
 
+### Los iconos van ADJUNTOS, no enlazados
+
+El conector de Gmail **elimina del `htmlBody` toda imagen enlazada con una URL**.
+Daba igual dónde estuvieran alojadas: se perdían siempre y el correo llegaba con
+huecos. Por eso la plantilla ya no enlaza imágenes: usa `cid:att0` y `cid:att1`,
+que apuntan a dos adjuntos incrustados.
+
+En la llamada a `send_message` hay que pasar los dos archivos del repositorio,
+**en este orden exacto**, porque `attN` es la posición dentro de `attachments`:
+
+| Posición | Archivo | En el HTML |
+|---|---|---|
+| 0 | `.automatizacion/logo.png` | `cid:att0` — logo en la cabecera |
+| 1 | `.automatizacion/usuario.png` | `cid:att1` — icono de Equipo Operaciones |
+
+Cada adjunto se pasa con su contenido en base64, `mimeType: "image/png"` y
+**`inline: true`**. Sin `inline: true` aparecerían como archivos adjuntos para
+descargar en vez de verse dentro del mensaje. Si inviertes el orden, el logo
+saldrá en el pie y el icono de persona en la cabecera.
+
+### El botón siempre llevará un paso intermedio
+
+El conector reescribe todo enlace del correo como
+`https://www.google.com/url?q=<destino>&source=gmail&ust=...&sa=E`. Esos enlaces
+no llevan firma, así que el destinatario ve la página "Aviso de redireccionamiento"
+de Google y tiene que dar un clic más. **No es algo que puedas arreglar desde la
+corrida**: no cambies el enlace ni la plantilla intentando evitarlo, y no lo
+reportes como un fallo propio. Por eso el correo lleva, debajo del botón, la
+dirección escrita en texto como alternativa.
+
 ### La fecha del correo se cambia SIEMPRE
 
 La plantilla trae un único campo variable, `{{FECHA_CORTE}}`, en la frase
