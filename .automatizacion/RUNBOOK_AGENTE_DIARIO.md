@@ -176,8 +176,30 @@ solo si el Paso 3 terminó bien.
 
 - **Para:** `tesoreria@incomelec.com`
 - **Asunto:** `Actualización informe tesoreria`
-- **Cuerpo HTML:** el contenido de `.automatizacion/correo-aviso.html`, sustituyendo
-  `{{FECHA_CORTE}}` por la fecha del corte en texto (p. ej. `24 de Noviembre`).
+- **Cuerpo HTML:** el contenido de `.automatizacion/correo-aviso.html`.
+
+### La fecha del correo se cambia SIEMPRE
+
+La plantilla trae un único campo variable, `{{FECHA_CORTE}}`, en la frase
+"Le informamos que al corte del día **{{FECHA_CORTE}}** se ha actualizado…".
+
+Reglas, sin excepción:
+
+1. **Nunca envíes la plantilla con `{{FECHA_CORTE}}` sin reemplazar.** Si el correo
+   sale con las llaves visibles, el cliente ve el texto crudo del sistema.
+2. La fecha que va ahí es **la del corte que acabas de publicar**, la misma que
+   quedó en `lidato:periodo` y en el pie del panel. No es la fecha de hoy ni la
+   hora de la corrida: si el lunes procesas el diario del viernes, va la del
+   viernes.
+3. Formato: `<DD> de <Mes>`, día sin cero a la izquierda y mes en español con
+   mayúscula inicial. Ejemplos: `24 de Noviembre`, `3 de Diciembre`, `1 de Enero`.
+4. Antes de enviar, comprueba que el cuerpo ya no contenga la cadena
+   `FECHA_CORTE`. Si la contiene, el reemplazo falló: corrígelo y no envíes hasta
+   que la fecha aparezca escrita.
+
+El resto de la plantilla no se toca: ni el asunto, ni el botón, ni el pie. Si hay
+que cambiar el enlace del botón, se cambia en el archivo del repositorio, nunca
+en el correo de una corrida.
 - Se envía con la herramienta `send_message` de Gmail, campo `htmlBody`.
 
 Envía el correo **una sola vez por día**. Si en el Paso 0 el panel ya estaba al día,
