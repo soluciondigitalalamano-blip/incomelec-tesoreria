@@ -19,6 +19,22 @@ Cada ejecución arranca en una sesión nueva y sin memoria: todo lo necesario es
    el panel ya se actualizó en una corrida anterior del mismo día.
    **Termina sin hacer nada, sin avisar y sin enviar correo.**
 
+### Regla del corte: nunca retroceder
+
+Guarda la fecha que lee ese `grep` como **corte publicado**. Más adelante, cuando
+tengas el Excel del correo, compara su fecha contra ella:
+
+| Fecha del Excel | Qué hace |
+|---|---|
+| Posterior al corte publicado | Procesa y publica con normalidad |
+| Igual al corte publicado | Ya está hecho: termina en silencio |
+| **Anterior al corte publicado** | **No publiques nada.** Avisa por notificación que llegó un diario con fecha anterior a la del panel y que publicarlo haría retroceder el corte. Deja que el dueño decida |
+
+Esto vale aunque el nombre del archivo y la celda `FECHA` de la Hoja1 no coincidan:
+manda la celda `FECHA`, y si las dos difieren, repórtalo también. Un diario viejo
+reprocesado borra los días ya publicados, y ese daño no se ve hasta que alguien
+abre el portal.
+
 ## Paso 1 · Buscar el correo con el Excel del día
 
 Busca en Gmail con la herramienta `search_threads`:
