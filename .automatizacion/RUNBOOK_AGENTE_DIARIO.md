@@ -168,13 +168,13 @@ Lo que sí hace la tarea: en la notificación del Paso 4, incluir al final una l
 exactamente así, para que el dueño lo envíe desde el chat con una sola indicación:
 
 ```
-CORREO LISTO · Para: josefelixlizalde@incomelec.com · Asunto: Actualización informe tesoreria · Corte: <DD> de <Mes>
+CORREO LISTO · Para: tesoreria@incomelec.com · Asunto: Actualización informe tesoreria · Corte: <DD> de <Mes>
 ```
 
 Cuando el envío automático quede habilitado, esto es lo que hay que ejecutar, y
 solo si el Paso 3 terminó bien.
 
-- **Para:** `josefelixlizalde@incomelec.com`
+- **Para:** `tesoreria@incomelec.com`
 - **Asunto:** `Actualización informe tesoreria`
 - **Cuerpo HTML:** el contenido de `.automatizacion/correo-aviso.html`, sustituyendo
   `{{FECHA_CORTE}}` por la fecha del corte en texto (p. ej. `24 de Noviembre`).
