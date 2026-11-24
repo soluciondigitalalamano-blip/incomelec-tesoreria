@@ -309,7 +309,7 @@ y estas propiedades, con los nombres exactos:
 | `Cadencia` | `Diario` |
 | `Estado` | `Entregado a tiempo` |
 | `date:Fecha:start` | `<YYYY-MM-DD>` |
-| `date:Fecha:is_datetime` | `0` |
+| `date:Fecha:is_datetime` | `0` (el número cero, sin comillas) |
 | `Acuse enviado` | `__YES__` |
 | `Canal` | `Correo` |
 | `Fuente` | `Agente` |
