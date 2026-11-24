@@ -63,16 +63,42 @@ toda moneda extranjera sumada en COP, cada línea de la solicitud con su marca
 El sitio es estático y se publica con GitHub Pages desde la rama por defecto.
 Actualiza **tres** cosas y en este orden:
 
-1. `PANEL DIARIO/index.html` ← el panel nuevo.
+1. `PANEL DIARIO/index.html` ← el panel nuevo. **Antes de guardarlo**, pon en su
+   `<head>`, justo después de la etiqueta `viewport`, la marca de actualización
+   con el día y la hora reales en que corriste la actualización:
+
+   ```html
+   <meta name="lidato:actualizado" content="AAAA-MM-DDTHH:MM-05:00">
+   <meta name="lidato:periodo" content="Corte DD mes AAAA">
+   ```
+
+   Esto es lo que el portal lee primero para mostrar "Actualizado · hace X · 23 nov
+   2026 · 09:00" en la tarjeta del Panel Diario. Si las etiquetas ya existen de un
+   corte anterior, **reemplaza sus valores**, no agregues unas nuevas. La hora va en
+   formato de 24 horas y zona `-05:00` (Bogotá), y es la hora real de la corrida,
+   no una inventada.
 2. La carpeta de la semana en curso, que debe quedar idéntica al panel diario.
    Hoy es `NOVIEMBRE/TERCERA SEMANA/index.html` (semana del 19 nov).
    Al cambiar de semana, usa la carpeta que corresponda al corte
    (`NOVIEMBRE/CUARTA SEMANA/`, luego `DICIEMBRE/PRIMERA SEMANA/`, etc.).
    Si la carpeta solo tiene la página de aviso, reemplázala por el panel.
-3. En el `index.html` de la raíz, dentro de `window.PORTAL.informes`, pon la fecha
-   del corte en el campo `actualizado` de la entrada `id: 'panel'`
-   (formato `'AAAA-MM-DDTHH:MM'`) y también en la entrada del mes en curso si se
-   actualizó su carpeta semanal.
+   Lleva las mismas dos etiquetas `lidato:` del punto anterior.
+3. En el `index.html` de la raíz, dentro de `window.PORTAL.informes`, pon la misma
+   fecha y hora en el campo `actualizado` de la entrada `id: 'panel'`
+   (formato `'AAAA-MM-DDTHH:MM'`, sin la zona), y también en la entrada del mes en
+   curso si se actualizó su carpeta semanal. Este campo es el respaldo por si el
+   portal no alcanza a leer el panel; los dos valores deben coincidir siempre.
+
+**Verificación de la fecha antes del commit:**
+
+```
+grep -o 'lidato:actualizado[^>]*' "PANEL DIARIO/index.html"
+grep -o 'lidato:actualizado[^>]*' "NOVIEMBRE/<SEMANA EN CURSO>/index.html"
+grep -n "actualizado: '" index.html | head -2
+```
+
+Los tres deben mostrar el mismo día y la misma hora. Si no coinciden, corrígelo
+antes de seguir: la tarjeta del portal mostraría una hora que no es.
 
 Luego:
 
