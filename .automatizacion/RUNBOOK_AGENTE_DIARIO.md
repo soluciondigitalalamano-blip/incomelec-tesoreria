@@ -187,10 +187,28 @@ Reglas, sin excepción:
 
 1. **Nunca envíes la plantilla con `{{FECHA_CORTE}}` sin reemplazar.** Si el correo
    sale con las llaves visibles, el cliente ve el texto crudo del sistema.
-2. La fecha que va ahí es **la del corte que acabas de publicar**, la misma que
-   quedó en `lidato:periodo` y en el pie del panel. No es la fecha de hoy ni la
-   hora de la corrida: si el lunes procesas el diario del viernes, va la del
-   viernes.
+2. La fecha que va ahí es **la del día en que se envía el correo**, tomada
+   automáticamente del reloj, nunca escrita a mano ni copiada del correo anterior.
+   Sácala así, porque el reloj de la máquina está en UTC y después de las 7 p. m.
+   de Bogotá ya marca el día siguiente:
+
+   ```
+   python3 -c "
+   import datetime, zoneinfo
+   M=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+   d=datetime.datetime.now(zoneinfo.ZoneInfo('America/Bogota'))
+   print('%d de %s' % (d.day, M[d.month-1]))"
+   ```
+
+   **No uses `date '+%B'`:** la máquina no tiene el idioma español instalado y
+   devolvería `November` en vez de `Noviembre`. Por eso el nombre del mes sale de
+   la lista de arriba.
+
+   En la operación normal esta fecha coincide con la del corte, porque el diario
+   del día se procesa y se avisa el mismo día. Si algún día no coincidieran
+   (por ejemplo, un lunes procesando el diario del viernes), avísalo en la
+   notificación al dueño: el correo sale con la fecha del envío, pero conviene
+   que él sepa que el corte era de otro día.
 3. Formato: `<DD> de <Mes>`, día sin cero a la izquierda y mes en español con
    mayúscula inicial. Ejemplos: `24 de Noviembre`, `3 de Diciembre`, `1 de Enero`.
 4. Antes de enviar, comprueba que el cuerpo ya no contenga la cadena
