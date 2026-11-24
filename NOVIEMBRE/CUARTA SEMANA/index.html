@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuarta Semana | Noviembre | INCOMELEC</title>
+<meta name="description" content="Semana sin informe publicado — Panel Diario de tesorería INCOMELEC.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,500;0,600;0,700;1,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --green:#146C43; --green-deep:#0B4A2E; --green-bright:#1C8A50; --ink:#123526; }
+  *{box-sizing:border-box} html,body{margin:0;padding:0;min-height:100%}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:64px 20px;text-align:center;color:#fff;
+    font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background-color:var(--green);
+    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.10) 1px, transparent 0),
+      linear-gradient(165deg, var(--green) 0%, var(--green-deep) 100%);
+    background-size:28px 28px, 100% 100%; background-attachment:fixed, fixed;}
+  .back-link{position:fixed;top:24px;left:24px;display:inline-flex;align-items:center;gap:8px;
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;letter-spacing:.08em;
+    color:rgba(255,255,255,.85);text-decoration:none;padding:8px 12px;border-radius:8px;transition:background-color .2s}
+  .back-link:hover{background:rgba(255,255,255,.12)}
+  .back-link svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.5em;
+    color:rgba(255,255,255,.85);margin:0 0 18px}
+  .logo-mark{display:inline-flex;padding:11px 24px;border:2px solid var(--green);border-radius:10px;background:#fff}
+  .logo-mark span{font-family:'Poppins',sans-serif;font-style:italic;font-weight:700;font-size:21px;color:var(--green)}
+  h1{font-size:26px;font-weight:600;margin:36px 0 10px}
+  p{margin:0;max-width:420px;font-size:15px;line-height:1.6;color:rgba(255,255,255,.85)}
+  .btn{margin-top:28px;display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border-radius:14px;
+    background:#fff;color:var(--ink);text-decoration:none;font-weight:600;font-size:15px;
+    box-shadow:0 10px 22px -8px rgba(6,30,18,.35);transition:transform .25s, background-color .25s, color .25s}
+  .btn:hover{transform:translateY(-3px);background:var(--green-bright);color:#fff}
+  @media (prefers-reduced-motion: reduce){ .btn{transition:none} .btn:hover{transform:none} }
+</style>
+</head>
+<body>
+  <a class="back-link" href="../">
+    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    NOVIEMBRE
+  </a>
+  <p class="eyebrow">CUARTA SEMANA</p>
+  <div class="logo-mark"><span>INCOMELEC</span></div>
+  <h1>Informe no publicado</h1>
+  <p>Esta semana todavía no tiene informe en el portal. Las semanas disponibles de noviembre son la segunda y la tercera.</p>
+  <a class="btn" href="../">Volver a Noviembre</a>
+</body>
+</html>
