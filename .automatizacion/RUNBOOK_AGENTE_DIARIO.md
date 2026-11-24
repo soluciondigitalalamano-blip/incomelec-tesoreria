@@ -156,23 +156,11 @@ fuente usado, qué rutas se publicaron, y el resumen de la reconciliación
 raro: saldos repetidos, bloques sueltos, pagos sin línea en la solicitud).
 Esos hallazgos van **solo aquí**, nunca dentro del HTML.
 
-## Paso 5 · El correo a gerencia
+## Paso 5 · Enviar el correo al área de tesorería
 
-**Estado actual: la tarea programada NO envía ni redacta este correo.** No tiene
-permiso para escribir correo a terceros sin el dueño presente, y ese permiso se
-habilita en la configuración de la cuenta, no cambiando este texto. No intentes
-enviarlo ni dejarlo como borrador: la llamada será rechazada y la corrida quedará
-a medias.
-
-Lo que sí hace la tarea: en la notificación del Paso 4, incluir al final una línea
-exactamente así, para que el dueño lo envíe desde el chat con una sola indicación:
-
-```
-CORREO LISTO · Para: tesoreria@incomelec.com · Asunto: Actualización informe tesoreria · Corte: <DD> de <Mes>
-```
-
-Cuando el envío automático quede habilitado, esto es lo que hay que ejecutar, y
-solo si el Paso 3 terminó bien.
+**La tarea programada sí envía este correo, por sí sola.** Es el último paso del
+flujo y se ejecuta **solo si el Paso 3 terminó bien**: si la actualización o el
+push fallaron, no se envía nada, porque anunciaría algo que no se publicó.
 
 - **Para:** `tesoreria@incomelec.com`
 - **Asunto:** `Actualización informe tesoreria`
@@ -231,5 +219,6 @@ no se envía nada.
 |---|---|
 | Panel ya tiene el corte de hoy | Termina en silencio |
 | No llegó el correo con el Excel de hoy | Termina en silencio |
-| Llegó el Excel | Actualiza, publica, avisa y envía el correo |
-| Falla la actualización o el push | Avisa el error y **no** envía el correo a gerencia |
+| Llegó el Excel con fecha posterior al corte publicado | Actualiza, publica, avisa y envía el correo |
+| El Excel tiene fecha anterior al corte publicado | No publica. Avisa al dueño y **no** envía el correo |
+| Falla la actualización o el push | Avisa el error y **no** envía el correo a tesorería |
