@@ -93,10 +93,31 @@ Actualiza **tres** cosas y en este orden:
    corte anterior, **reemplaza sus valores**, no agregues unas nuevas. La hora va en
    formato de 24 horas y zona `-05:00` (Bogotá), y es la hora real de la corrida,
    no una inventada.
+
+   **Cuidado con la hora: el reloj de la máquina está en UTC, no en Bogotá.**
+   Nunca pegues la hora de `date` con el sufijo `-05:00`: te adelantarías 5 horas
+   y, pasada la medianoche UTC, publicarías el día siguiente. Saca la hora así:
+
+   ```
+   TZ=America/Bogota date '+%Y-%m-%dT%H:%M'
+   ```
+
+   Antes del commit, comprueba que la hora escrita **no sea posterior** a
+   `TZ=America/Bogota date`. Si lo es, está mal: corrígela.
 2. La carpeta de la semana en curso, que debe quedar idéntica al panel diario.
-   Hoy es `NOVIEMBRE/TERCERA SEMANA/index.html` (semana del 19 nov).
-   Al cambiar de semana, usa la carpeta que corresponda al corte
-   (`NOVIEMBRE/CUARTA SEMANA/`, luego `DICIEMBRE/PRIMERA SEMANA/`, etc.).
+
+   **Cómo se elige la carpeta:** no por el número de semana del mes, sino por el
+   bloque de días que el propio panel agrupa en su historial. Si el encabezado del
+   historial dice "Semana desde el 19 nov", el corte pertenece a esa semana aunque
+   caiga en lunes y parezca de la semana siguiente. Hoy esa carpeta es
+   `NOVIEMBRE/TERCERA SEMANA/` (cubre del 19 al 25 de nov). Solo se pasa a
+   `CUARTA SEMANA/` cuando el historial arranque en una fecha posterior al 25.
+   Antes de escribir, abre la carpeta candidata: si contiene un panel de un corte
+   de la misma semana, esa es; si contiene la página de aviso y la otra tiene el
+   panel de esta semana, te equivocaste de carpeta.
+
+   Deja la carpeta que no corresponde **tal como estaba**: no conviertas una
+   página de aviso en panel ni dejes una semana con un corte viejo.
    Si la carpeta solo tiene la página de aviso, reemplázala por el panel.
    Lleva las mismas dos etiquetas `lidato:` del punto anterior.
 3. En el `index.html` de la raíz, dentro de `window.PORTAL.informes`, pon la misma
