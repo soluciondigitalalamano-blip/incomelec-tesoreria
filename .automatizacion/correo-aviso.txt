@@ -1,0 +1,12 @@
+Estimado/a cliente,
+
+Le informamos que al corte del día {{FECHA_CORTE}} se ha actualizado el siguiente módulo:
+
+1. Informe de Tesorería Diario
+
+Puede ingresar a su plataforma para revisar el detalle completo:
+https://tesoreria-prueba.pages.dev/
+
+Equipo Operaciones
+Lidato · Su solución digital a la mano
+operaciones@lidato.site

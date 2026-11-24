@@ -2,7 +2,7 @@
 
 Este documento es la instrucción completa para la tarea programada que revisa el
 correo, actualiza el panel diario, lo publica, avisa a gerencia, envía el correo
-a tesorería y marca la entrega en la Bitácora de Notion.
+a tesorería por Resend y marca la entrega en la Bitácora de Notion.
 Cada ejecución arranca en una sesión nueva y sin memoria: todo lo necesario está aquí.
 
 **Zona horaria de referencia: America/Bogota (UTC-05:00).**
@@ -159,57 +159,59 @@ Esos hallazgos van **solo aquí**, nunca dentro del HTML.
 
 ## Paso 5 · Enviar el correo al área de tesorería
 
-**La tarea programada sí envía este correo, por sí sola.** Es el último paso del
-flujo y se ejecuta **solo si el Paso 3 terminó bien**: si la actualización o el
-push fallaron, no se envía nada, porque anunciaría algo que no se publicó.
+El correo **no sale por Gmail**. Sale por **Resend**, con el dominio propio
+`lidato.site`, usando la herramienta `mcp__Resend__send-email`.
 
-- **Para:** `tesoreria@incomelec.com`
-- **Asunto:** `Actualización informe tesoreria`
-- **Cuerpo HTML:** el contenido de `.automatizacion/correo-aviso.html`.
+No uses `send_message` de Gmail para este correo. Se probó y no sirve: el
+conector de Gmail reescribe toda dirección web del mensaje y el cliente termina
+viendo una pantalla de advertencia de Google antes de llegar al panel. La sección
+«Por qué no se manda por Gmail» al final de este paso tiene el detalle.
 
-### Los iconos van ADJUNTOS, no enlazados
+### Qué enviar
 
-El conector de Gmail **elimina del `htmlBody` toda imagen enlazada con una URL**.
-Daba igual dónde estuvieran alojadas: se perdían siempre y el correo llegaba con
-huecos. Por eso la plantilla ya no enlaza imágenes: usa `cid:att0` y `cid:att1`,
-que apuntan a dos adjuntos incrustados.
+| Campo | Valor |
+|---|---|
+| `from` | `LIDATO <operaciones@lidato.site>` |
+| `to` | `["tesoreria@incomelec.com"]` |
+| `subject` | `Actualización informe tesorería` |
+| `html` | el contenido de `.automatizacion/correo-aviso.html`, con `{{FECHA_CORTE}}` reemplazado |
+| `text` | el contenido de `.automatizacion/correo-aviso.txt`, con `{{FECHA_CORTE}}` reemplazado |
 
-En la llamada a `send_message` hay que pasar los dos archivos del repositorio,
-**en este orden exacto**, porque `attN` es la posición dentro de `attachments`:
+`text` es obligatorio cuando mandas `html`. No lo omitas.
 
-| Posición | Archivo | En el HTML |
+### Los iconos van como adjuntos incrustados
+
+En `attachments`, exactamente estos dos y en este orden:
+
+| `filename` | `url` | `contentId` |
 |---|---|---|
-| 0 | `.automatizacion/logo.png` | `cid:att0` — logo en la cabecera |
-| 1 | `.automatizacion/usuario.png` | `cid:att1` — icono de Equipo Operaciones |
+| `logo.png` | `https://raw.githubusercontent.com/soluciondigitalalamano-blip/mis-imagenes/refs/heads/main/logo-white.png` | `logolidato` |
+| `usuario.png` | `https://raw.githubusercontent.com/soluciondigitalalamano-blip/mis-imagenes/refs/heads/main/user-icon-teal.png` | `iconousuario` |
 
-Cada adjunto se pasa con su contenido en base64, `mimeType: "image/png"` y
-**`inline: true`**. Sin `inline: true` aparecerían como archivos adjuntos para
-descargar en vez de verse dentro del mensaje. Si inviertes el orden, el logo
-saldrá en el pie y el icono de persona en la cabecera.
+Resend descarga esas imágenes de GitHub y las incrusta en el correo. La plantilla
+las llama por `cid:logolidato` y `cid:iconousuario`: esos nombres tienen que
+coincidir con los `contentId` o los iconos salen rotos.
 
-### El botón siempre llevará un paso intermedio
+### El botón se deja tal cual
 
-El conector reescribe todo enlace del correo como
-`https://www.google.com/url?q=<destino>&source=gmail&ust=...&sa=E`. Esos enlaces
-no llevan firma, así que el destinatario ve la página "Aviso de redireccionamiento"
-de Google y tiene que dar un clic más. **No es algo que puedas arreglar desde la
-corrida**: no cambies el enlace ni la plantilla intentando evitarlo, y no lo
-reportes como un fallo propio. Por eso el correo lleva, debajo del botón, la
-dirección escrita en texto como alternativa.
+La plantilla trae `href="https://tesoreria-prueba.pages.dev/"`. Resend entrega el
+enlace sin tocarlo, así que el cliente da un clic y entra directo. **No cambies el
+enlace, no lo envuelvas en nada y no le agregues parámetros.**
 
 ### La fecha del correo se cambia SIEMPRE
 
 La plantilla trae un único campo variable, `{{FECHA_CORTE}}`, en la frase
-"Le informamos que al corte del día **{{FECHA_CORTE}}** se ha actualizado…".
+"Le informamos que al corte del día **{{FECHA_CORTE}}** se ha actualizado…", tanto
+en el HTML como en el texto plano.
 
 Reglas, sin excepción:
 
-1. **Nunca envíes la plantilla con `{{FECHA_CORTE}}` sin reemplazar.** Si el correo
-   sale con las llaves visibles, el cliente ve el texto crudo del sistema.
-2. La fecha que va ahí es **la del día en que se envía el correo**, tomada
-   automáticamente del reloj, nunca escrita a mano ni copiada del correo anterior.
-   Sácala así, porque el reloj de la máquina está en UTC y después de las 7 p. m.
-   de Bogotá ya marca el día siguiente:
+1. **Nunca envíes con `{{FECHA_CORTE}}` sin reemplazar**, ni en el HTML ni en el
+   texto. Si sale con las llaves visibles, el cliente ve el texto crudo del sistema.
+2. La fecha es **la del día en que se envía el correo**, tomada automáticamente del
+   reloj, nunca escrita a mano ni copiada del correo anterior. Sácala así, porque el
+   reloj de la máquina está en UTC y después de las 7 p. m. de Bogotá ya marca el
+   día siguiente:
 
    ```
    python3 -c "
@@ -220,27 +222,46 @@ Reglas, sin excepción:
    ```
 
    **No uses `date '+%B'`:** la máquina no tiene el idioma español instalado y
-   devolvería `November` en vez de `Noviembre`. Por eso el nombre del mes sale de
-   la lista de arriba.
+   devolvería `November` en vez de `Noviembre`.
 
-   En la operación normal esta fecha coincide con la del corte, porque el diario
-   del día se procesa y se avisa el mismo día. Si algún día no coincidieran
-   (por ejemplo, un lunes procesando el diario del viernes), avísalo en la
-   notificación al dueño: el correo sale con la fecha del envío, pero conviene
-   que él sepa que el corte era de otro día.
+   En la operación normal esta fecha coincide con la del corte. Si algún día no
+   coincidieran (un lunes procesando el diario del viernes), el correo sale con la
+   fecha del envío, pero avísalo en la notificación al dueño.
 3. Formato: `<DD> de <Mes>`, día sin cero a la izquierda y mes en español con
    mayúscula inicial. Ejemplos: `24 de Noviembre`, `3 de Diciembre`, `1 de Enero`.
-4. Antes de enviar, comprueba que el cuerpo ya no contenga la cadena
-   `FECHA_CORTE`. Si la contiene, el reemplazo falló: corrígelo y no envíes hasta
-   que la fecha aparezca escrita.
+4. Antes de enviar, comprueba que ni el HTML ni el texto contengan ya la cadena
+   `FECHA_CORTE`.
 
 El resto de la plantilla no se toca: ni el asunto, ni el botón, ni el pie. Si hay
-que cambiar el enlace del botón, se cambia en el archivo del repositorio, nunca
-en el correo de una corrida.
-- Se envía con la herramienta `send_message` de Gmail, campo `htmlBody`.
+que cambiar el enlace del botón, se cambia en el archivo del repositorio, nunca en
+el correo de una corrida.
 
-Envía el correo **una sola vez por día**. Si en el Paso 0 el panel ya estaba al día,
-no se envía nada.
+### Después de enviar, verifica
+
+`mcp__Resend__send-email` devuelve un `id`. Con ese id llama a
+`mcp__Resend__get-email` y comprueba dos cosas en el HTML que quedó enviado:
+
+- que aparezca `href="https://tesoreria-prueba.pages.dev/"` **sin** `google.com/url`
+  ni ningún otro envoltorio;
+- que no quede la cadena `FECHA_CORTE`.
+
+Si algo de eso falla, dilo en la notificación al dueño.
+
+Envía el correo **una sola vez por día**, y solo si el push terminó bien. Si en el
+Paso 0 el panel ya estaba al día, no se envía nada.
+
+### Por qué no se manda por Gmail
+
+Se probó de tres formas distintas y las tres fallaron igual: botón con etiqueta de
+enlace, dirección como texto suelto dentro del HTML, y correo de puro texto plano.
+En los tres casos el conector de Gmail reemplazó la dirección por
+`https://www.google.com/url?q=...&source=gmail&ust=...&sa=E`, sin la firma `usg`
+que Gmail sí agrega cuando el envío sale de su propia pantalla, y por eso el
+destinatario veía una pantalla de advertencia. El conector además borra toda
+imagen con `src` externo.
+
+Nada de eso se arregla desde el HTML. Por eso el correo salió de Gmail y se pasó a
+Resend. **No vuelvas a intentar arreglarlo cambiando la plantilla.**
 
 ---
 
@@ -357,5 +378,6 @@ del 24. La siguiente entrega, la del 25 de noviembre, es la que sube el contador
 | Llegó el Excel con fecha posterior al corte publicado | Actualiza, publica, avisa, envía el correo y sube el contador de la Bitácora |
 | El Excel tiene fecha anterior al corte publicado | No publica. Avisa al dueño y **no** envía el correo |
 | Falla la actualización o el push | Avisa el error, **no** envía el correo y **no** escribe en la Bitácora |
+| Falla el envío por Resend | Avisa el error. **No** reintenta por Gmail y **no** marca la Bitácora |
 | El correo salió pero Notion falla | Avisa que falta marcar el día. No reintenta en bucle ni reenvía el correo |
 | La fila del ciclo ya tiene la fecha de hoy | Hoy ya estaba marcado. No vuelve a contar |
