@@ -259,6 +259,7 @@ viendo una pantalla de advertencia de Google antes de llegar al panel. La secci�
 | `from` | `LIDATO <operaciones@lidato.site>` |
 | `to` | `["tesoreria@incomelec.com"]` |
 | `bcc` | `["soluciondigitalalamano@gmail.com"]` |
+| `replyTo` | `["operaciones@lidato.site"]` |
 | `subject` | `Actualización informe tesorería` |
 | `html` | el contenido de `.automatizacion/correo-aviso.html`, con `{{FECHA_CORTE}}` reemplazado |
 | `text` | el contenido de `.automatizacion/correo-aviso.txt`, con `{{FECHA_CORTE}}` reemplazado |
@@ -336,15 +337,93 @@ el correo de una corrida.
 
 Si algo de eso falla, dilo en la notificación al dueño.
 
-### `delivered` no quiere decir que el cliente lo vio
+### Los estados de Resend, y qué prueba cada uno
 
-Resend reporta `sent` y luego `delivered`. `delivered` significa **solo** que el
-servidor del destinatario aceptó el mensaje. No dice si entró a la bandeja, si
-cayó en spam o si la pasarela corporativa lo retuvo en cuarentena.
+Verificado contra la documentación de Resend
+(`resend.com/guides/email/users-never-got-login-code`,
+`resend.com/docs/webhooks/event-types`):
 
-En la notificación escribe **«aceptado por el servidor del destinatario»**, nunca
-«el correo le llegó». El 25-nov-2026 tres envíos figuraban `delivered` y la
-destinataria no vio ninguno.
+| Estado | Qué significa |
+|---|---|
+| `sent` | Resend lo procesó y lo está entregando al servidor del destinatario |
+| `delivered` | **El servidor del destinatario aceptó el mensaje.** Nada más |
+| `delivery_delayed` | Rechazo temporal (buzón lleno, límite de tasa). Reintenta hasta 14 h antes de marcarlo rebotado |
+| `bounced` | El servidor lo rechazó de forma permanente |
+| `complained` | Se entregó y el destinatario lo marcó como spam |
+| `suppressed` | No se envió: la dirección está en la lista de supresión |
+| `failed` | Falló el envío: destinatario inválido, API key, verificación de dominio o cuota |
+
+La documentación es explícita: *«'Delivered' only means the recipient's mail
+server accepted the email»*, y lo que pase después — bandeja, spam, cuarentena —
+lo decide el proveedor del destinatario y **no se le reporta al remitente**.
+
+**Nunca escribas que el correo llegó.** En la notificación va
+«aceptado por el servidor del destinatario». El 25-nov-2026 tres envíos
+figuraban `delivered` y la destinataria no vio ninguno: estaban dentro de
+INCOMELEC, retenidos.
+
+### Comprobación obligatoria después de enviar
+
+Con el `id` que devuelve `send-email`, llama a `mcp__Resend__get-email` y:
+
+1. Si el estado es `bounced`, `failed` o `suppressed`, **el correo no salió**:
+   avísalo como fallo, no como entrega.
+2. Comprueba en el HTML enviado que esté `href="https://tesoreria-prueba.pages.dev/"`
+   sin `google.com/url`, y que no quede la cadena `FECHA_CORTE`.
+3. Reporta el `id` y el estado textual, sin interpretarlo.
+
+### Si el cliente dice que no le llegó
+
+No reenvíes el mismo correo: si figura `delivered`, un envío idéntico cae en el
+mismo sitio. Sigue este orden, que es el que recomienda Resend:
+
+1. `mcp__Resend__get-suppression <dirección>` — si está suprimida, ahí está la causa.
+2. Mira el estado real del envío. `delivered` sin rebote significa que el correo
+   **entró al dominio del destinatario** y quedó retenido de su lado.
+3. Pide que busquen **por el asunto exacto**, no por el remitente, en todo el
+   correo incluido spam. Resend dice que buscar por asunto lo encuentra antes.
+4. Correo corporativo: la cuarentena está **fuera** del buzón. En Microsoft 365
+   se revisa en `security.microsoft.com/quarantine`; el usuario puede liberar y
+   marcar «Allow sender», pero lo clasificado como phishing de alta confianza
+   solo lo libera un administrador. Liberar un mensaje libera **ese** mensaje:
+   para los siguientes hace falta que TI ponga el dominio en la lista de permitidos.
+5. A TI se le da el **dominio de envío**, no direcciones IP: las IP del proveedor
+   cambian.
+
+### Por qué pasa, y qué lo arregla de raíz
+
+`lidato.site` se dio de alta en Resend el 24-nov-2026. Un dominio nuevo no tiene
+reputación, y la documentación advierte que el spam es más probable *«for new
+domains, for the first email a user gets from you»*. El 25-nov fue la primera vez
+que este dominio escribió a `incomelec.com`.
+
+Pendientes, en orden de impacto:
+
+1. **Publicar DMARC.** Hoy `lidato.site` tiene SPF y DKIM verificados pero **no
+   tiene registro DMARC**. Resend lo recomienda y advierte que Gmail y Yahoo lo
+   exigen a remitentes masivos desde 2024. El valor para empezar, textual de su
+   documentación:
+
+   ```
+   Nombre: _dmarc.lidato.site
+   Tipo:   TXT
+   Valor:  v=DMARC1; p=none; rua=mailto:operaciones@lidato.site;
+   ```
+
+   Se empieza en `p=none` — *«we suggest starting with a policy of p=none;
+   before moving to a stricter policy»* — y solo se sube a `p=quarantine` y
+   después a `p=reject` cuando todo el correo legítimo pase DMARC.
+2. **Lista de permitidos en INCOMELEC.** Que TI añada `lidato.site`. Es lo único
+   que garantiza la bandeja en un dominio corporativo.
+3. **Que la destinataria responda una vez** el correo: es la señal más fuerte
+   para su propio filtro.
+4. **Webhooks.** La cuenta no tiene ninguno configurado. Con un endpoint que
+   escuche `email.bounced`, `email.complained`, `email.delivery_delayed` y
+   `email.suppressed` se detectaría el problema sin esperar a que el cliente
+   reclame. Deduplicar por la cabecera `svix-id`.
+5. **Volumen.** El correo transaccional «se calienta solo» según Resend, pero un
+   dominio nuevo igual necesita rodaje. No sirve de nada mover los envíos a otro
+   dominio para esquivar el filtro.
 
 Envía el correo **una sola vez por día**, y solo si el push terminó bien. Si en el
 Paso 0 el panel ya estaba al día, no se envía nada.
