@@ -14,6 +14,15 @@ Cada ejecución arranca en una sesión nueva y sin memoria: todo lo necesario es
 1. Clona el repositorio:
    `git clone --depth 1 https://github.com/soluciondigitalalamano-blip/incomelec-tesoreria /home/claude/incomelec-tesoreria`
    (timeout generoso, ~10 min; una sola vez).
+
+   **Si la carpeta ya existe** (a veces es el directorio de trabajo de la sesión),
+   no la borres ni vuelvas a clonar: `rm -rf` sobre ella está bloqueado y la
+   corrida se traba. Haz esto:
+
+   ```
+   git -C /home/claude/incomelec-tesoreria fetch origin --depth 1
+   git -C /home/claude/incomelec-tesoreria reset --hard origin/main
+   ```
 2. Mira el pie de página de `PANEL DIARIO/index.html`:
    `grep -o 'saldos de DIARIO[0-9]*\.xlsx' "PANEL DIARIO/index.html"`
 3. Si el nombre ya corresponde al archivo **de hoy** (`DIARIO<DD><MM><AAAA>.xlsx`),
@@ -60,6 +69,76 @@ correo, no toques el repositorio. La siguiente corrida del día volverá a mirar
 
 Si sí está: descarga los adjuntos con `download_gmail_attachment` a una carpeta
 nueva y vacía (p. ej. `/home/claude/insumos/`), separada del código.
+
+### Un segundo archivo del mismo día manda sobre el primero
+
+Tesorería a veces manda el diario incompleto y después lo corrige. **Antes de
+hacer el commit, vuelve a buscar en Gmail** con la misma consulta: si hay un
+adjunto más nuevo para hoy, trabaja con ese y descarta el anterior.
+
+Si tienes dos archivos del mismo día y **no coinciden**, no publiques ninguno:
+avisa por notificación cuáles celdas difieren. El 25-nov-2026 llegaron dos
+versiones; la segunda traía una consignación de Parqueoo que la primera no
+tenía, y además decía `FECHA` 24 en vez de 25.
+
+**La celda `FECHA` manda sobre el nombre del archivo.** Un archivo llamado
+`DIARIO25112026.xlsx` cuya celda `FECHA` dice 24 es el diario del 24, y aplica
+la regla de no retroceder el corte: no se publica.
+
+## Paso 1 bis · Validar el Excel antes de creerle
+
+La fuente trae errores. Estos cuatro controles son obligatorios y van **con
+código**, antes de tocar el HTML.
+
+**1. Lee el libro dos veces: con valores y con fórmulas.**
+
+```python
+openpyxl.load_workbook(ruta, data_only=True)    # valores
+openpyxl.load_workbook(ruta, data_only=False)   # fórmulas
+```
+
+**2. Cada TOTAL contra sus propias filas.** Si el rango de la fórmula deja
+fuera una línea con valor, el total del Excel está mal: **vale la línea, no el
+total**. Usa la suma real y repórtalo en la notificación.
+El 25-nov-2026: `TOTAL PAGOS BANCOLOMBIA` era `=SUM(D49:D54)` y dejaba fuera la
+retención de D46 por 17.793.000, así que el Excel mostraba 0.
+
+**3. Saldos escritos a mano.** Revisa si algún saldo de la columna E es una
+fórmula con el saldo del día anterior incrustado. Esas fórmulas suelen ignorar
+las consignaciones. El 25-nov-2026 Parqueoo tenía `=118812724-D77`, que resta
+pagos y no suma ingresos.
+
+**4. Arrastre del día anterior.** Compara **cada línea de pago y de
+consignación** contra el panel del día anterior, no solo los bloques sueltos.
+Si una línea es idéntica (mismo beneficiario y mismo valor) a una ya publicada
+ayer, es arrastre: **no cuenta como movimiento de hoy** y se reporta.
+El 25-nov-2026 el pago de TKH por USD 10.063 venía repetido del 24.
+
+**5. Saldo contra movimientos.** Para cada banco:
+`saldo de apertura + consignaciones − pagos` debe dar el saldo del Excel.
+Lista en la notificación todos los que no cierren, con la diferencia exacta.
+No ajustes nada para que cuadre: se publica lo que dice la fuente y se reporta
+la diferencia.
+
+### Nunca publiques una cifra que no esté en la fuente
+
+Si un número no se puede leer del archivo — viene cortado, falta, o dos
+versiones se contradicen — **para y avisa**. No lo deduzcas por aritmética, no
+lo infieras de una captura de pantalla y no lo completes «porque es el único
+valor que cuadra». Un dígito inventado en un saldo de tesorería no se nota hasta
+que alguien concilia contra el banco.
+
+### Convención de las filas de las tablas de detalle
+
+Las filas nuevas del historial copian la convención del panel de la semana
+anterior, o los filtros por día dejan de funcionar:
+
+- ingresos: `<tr data-ingrow="25nov" data-week="4">`
+- pagos: `<tr data-dayrow="25nov" data-week="4">`
+- el total del día lleva los mismos atributos; el total acumulado no lleva ninguno
+- el banco va en `<span class="chip banco">`, el beneficiario en `<td class="strong">`
+
+---
 
 ## Paso 2 · Actualizar el HTML
 
@@ -143,7 +222,7 @@ Luego:
 ```
 git -C /home/claude/incomelec-tesoreria add -A
 git -C /home/claude/incomelec-tesoreria commit -m "Panel diario · corte <DD> <mes> 2026"
-git -C /home/claude/incomelec-tesoreria -c push.negotiate=true push origin HEAD
+git -C /home/claude/incomelec-tesoreria -c push.negotiate=true push origin HEAD:refs/heads/main
 ```
 
 Confirma que el push quedó bien (`git log --oneline -1` y salida del push sin error).
@@ -156,6 +235,12 @@ fuente usado, qué rutas se publicaron, y el resumen de la reconciliación
 (totales que cuadran, líneas pendientes de la solicitud y cualquier hallazgo
 raro: saldos repetidos, bloques sueltos, pagos sin línea en la solicitud).
 Esos hallazgos van **solo aquí**, nunca dentro del HTML.
+
+La notificación incluye además, siempre, lo que **no** cuadró: totales del Excel
+corregidos por fórmula mala, líneas tomadas como arrastre, saldos que no cierran
+con la diferencia exacta, pagos sin línea en la solicitud y excedentes. Si todo
+cuadró, dilo en una línea. Un silencio no se distingue de un control que no se
+hizo.
 
 ## Paso 5 · Enviar el correo al área de tesorería
 
@@ -250,6 +335,16 @@ el correo de una corrida.
 - que no quede la cadena `FECHA_CORTE`.
 
 Si algo de eso falla, dilo en la notificación al dueño.
+
+### `delivered` no quiere decir que el cliente lo vio
+
+Resend reporta `sent` y luego `delivered`. `delivered` significa **solo** que el
+servidor del destinatario aceptó el mensaje. No dice si entró a la bandeja, si
+cayó en spam o si la pasarela corporativa lo retuvo en cuarentena.
+
+En la notificación escribe **«aceptado por el servidor del destinatario»**, nunca
+«el correo le llegó». El 25-nov-2026 tres envíos figuraban `delivered` y la
+destinataria no vio ninguno.
 
 Envía el correo **una sola vez por día**, y solo si el push terminó bien. Si en el
 Paso 0 el panel ya estaba al día, no se envía nada.
