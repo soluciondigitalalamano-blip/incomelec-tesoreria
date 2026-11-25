@@ -173,11 +173,15 @@ viendo una pantalla de advertencia de Google antes de llegar al panel. La secci�
 |---|---|
 | `from` | `LIDATO <operaciones@lidato.site>` |
 | `to` | `["tesoreria@incomelec.com"]` |
+| `bcc` | `["soluciondigitalalamano@gmail.com"]` |
 | `subject` | `Actualización informe tesorería` |
 | `html` | el contenido de `.automatizacion/correo-aviso.html`, con `{{FECHA_CORTE}}` reemplazado |
 | `text` | el contenido de `.automatizacion/correo-aviso.txt`, con `{{FECHA_CORTE}}` reemplazado |
 
 `text` es obligatorio cuando mandas `html`. No lo omitas.
+
+La copia oculta a `soluciondigitalalamano@gmail.com` va en **todos** los envíos: es el
+único registro del aviso que queda fuera de Resend. No la quites ni la pongas en `cc`.
 
 ### Los iconos van como adjuntos incrustados
 
