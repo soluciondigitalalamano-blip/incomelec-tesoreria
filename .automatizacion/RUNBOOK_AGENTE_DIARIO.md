@@ -128,11 +128,12 @@ lo infieras de una captura de pantalla y no lo completes «porque es el único
 valor que cuadra». Un dígito inventado en un saldo de tesorería no se nota hasta
 que alguien concilia contra el banco.
 
-### Los popovers de banco abren con el día del corte
+### Los popovers son del día del corte y de nada más
 
-Primera fila de KPI del día (apertura del día anterior, ingresos del día, pagos
-del día, saldo al corte), segunda fila con la semana, y las tablas con columna
-`Fecha` empezando por el día del corte. El detalle está en el Paso 4 bis de
+KPI del día (apertura del día anterior, ingresos, pagos y saldo al corte) y tablas
+con solo los movimientos de ese día. Los días anteriores se ven únicamente en
+«Detallado de ingresos recibidos» y «Detallado de pagos ejecutados», que tienen su
+filtro, y en la tarjeta «Pagado en la semana». Detalle en el Paso 4 bis de
 `PROMPT_ACTUALIZACION_HTML.md`. Es el reclamo más repetido del cliente.
 
 ### Convención de las filas de las tablas de detalle

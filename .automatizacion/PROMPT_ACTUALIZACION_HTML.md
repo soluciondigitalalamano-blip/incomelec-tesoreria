@@ -47,32 +47,31 @@ Un mismo número (ej. el saldo de Davivienda) aparece en varios sitios: tarjeta 
 
 Incluye siempre contexto (nombre del banco, etiqueta del campo) para que el reemplazo sea inequívoco. Preferible: generar todo desde un solo modelo de datos para que tarjetas, tablas y popovers no puedan desincronizarse.
 
-## **Paso 4 bis — El popover de un banco abre con el día del corte, no con la semana**
+## **Paso 4 bis — Un popover es del día del corte y de nada más**
 
 Es la regla 3 aplicada a los popovers, y es el error que más ha reclamado el
-cliente. Si la primera fila de KPI dice "ingresos de la semana", el cliente abre
-la tarjeta el día del corte y ve el movimiento **del día anterior** como si fuera
-el de hoy. El 26-nov-2026 pasó dos veces: Colpatria mostraba 142.217.361 de
-ingresos cuando ese día no entró nada, y en Bancolombia los cuatro pagos de
-SUPLEC del día quedaban debajo del pago del día anterior, fuera de la pantalla.
+cliente: tres veces el 26-nov-2026. Si en la tarjeta de un banco aparece una fila
+de ayer, el cliente la lee como movimiento de hoy.
 
-Cómo se arma el popover de banco:
+1. **KPI, los cuatro del mismo día:** `Saldo de apertura · <día anterior>` (el
+   saldo al corte del panel publicado ayer) · `Ingresos del <día del corte>` ·
+   `Pagos del <día del corte>` · `Saldo al corte · <día del corte>`. Un día sin
+   movimiento muestra 0, nunca el valor de otro día.
+2. **Las tablas del popover traen solo los movimientos del día del corte**, con
+   columna `Fecha` y su total. Si ese día el banco o el concepto no tuvo nada, va
+   el texto vacío («Sin consignaciones el <fecha>»), no la fila del día anterior.
+3. **Los días anteriores viven en otro sitio:** «Detallado de ingresos recibidos»
+   y «Detallado de pagos ejecutados», que ya tienen filtro por día y botón de
+   acumulado de la semana, y la tarjeta «Pagado en la semana», que por la regla 3
+   es semanal línea por línea. Ahí sí se ven todos los días; en los popovers de
+   banco y de concepto, no.
+4. El acumulado de la semana puede quedar como **un KPI suelto y rotulado**
+   («Acumulado semana»), que es el dato secundario que pide la regla 3. Lo que no
+   puede quedar es una fila de otro día dentro de la tabla.
 
-1. **Primera fila de KPI, los cuatro del mismo día:** `Saldo de apertura · <día
-   anterior>` (el saldo al corte del panel publicado ayer) · `Ingresos del <día
-   del corte>` · `Pagos del <día del corte>` · `Saldo al corte · <día del corte>`.
-   Un día sin movimiento muestra 0, nunca el valor de otro día.
-2. **Segunda fila de KPI, la semana como dato secundario:** `Saldo antes de la
-   semana` (el saldo del día anterior al inicio de la semana) · `Ingresos de la
-   semana` · `Pagos de la semana`. Las dos filas tienen que cuadrar cada una por
-   su lado; nunca se mezclan una apertura de un periodo con los movimientos de otro.
-3. **Las tablas llevan columna `Fecha` y arrancan por el día del corte**, con un
-   subtotal por día y, si la semana tiene más de un día, un total de la semana al
-   final. Los días anteriores van debajo, nunca encima.
-
-La resta puede no dar exacta si la fuente trae diferencias (Paso 1 bis punto 5
-del runbook). Esa diferencia se reporta en la notificación y **no** se tapa
-ajustando la apertura ni recortando movimientos.
+La resta del KPI puede no dar exacta si la fuente trae diferencias (Paso 1 bis
+punto 5 del runbook). Esa diferencia se reporta en la notificación y **no** se
+tapa ajustando la apertura ni recortando movimientos.
 
 ## **Paso 5 — Mismo nivel de detalle en cada ubicación**
 
