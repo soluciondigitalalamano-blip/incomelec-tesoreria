@@ -128,6 +128,13 @@ lo infieras de una captura de pantalla y no lo completes «porque es el único
 valor que cuadra». Un dígito inventado en un saldo de tesorería no se nota hasta
 que alguien concilia contra el banco.
 
+### Apertura de la semana para los popovers de banco
+
+Los popovers de banco abren con `apertura + consignaciones − pagos = saldo al
+corte`. La apertura es el saldo **anterior al inicio de la semana**, copiado del
+KPI de apertura del panel ya publicado de esa misma semana, no el cierre de
+ayer. El detalle está en el Paso 4 bis de `PROMPT_ACTUALIZACION_HTML.md`.
+
 ### Convención de las filas de las tablas de detalle
 
 Las filas nuevas del historial copian la convención del panel de la semana

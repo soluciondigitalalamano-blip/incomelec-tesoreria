@@ -47,6 +47,30 @@ Un mismo número (ej. el saldo de Davivienda) aparece en varios sitios: tarjeta 
 
 Incluye siempre contexto (nombre del banco, etiqueta del campo) para que el reemplazo sea inequívoco. Preferible: generar todo desde un solo modelo de datos para que tarjetas, tablas y popovers no puedan desincronizarse.
 
+## **Paso 4 bis — Los cuatro KPI de un popover de banco son del mismo periodo**
+
+La fila de KPI de cada popover de banco es una resta que el cliente hace de un
+vistazo: **apertura + consignaciones − pagos = saldo al corte**. Si los cuatro
+valores no pertenecen al mismo periodo, la fila no cuadra y el panel parece
+equivocado aunque los saldos estén bien.
+
+Como las dos tablas de abajo (consignaciones y pagos) son **de la semana**, la
+apertura también tiene que ser de la semana: el saldo **del día anterior al
+inicio de la semana**, no el cierre de ayer.
+
+- Semana que arranca el 25 nov → `Saldo de apertura · 24 nov 2026`.
+- Ese número **no** se saca del Excel del día: se copia del KPI de apertura del
+  panel de la semana en curso que ya está publicado, que es el único que
+  mantiene la cadena coherente día tras día. Al abrir una semana nueva, la
+  apertura es el saldo al corte del último panel de la semana anterior.
+- El error típico, y el que reportó el cliente el 26-nov-2026: poner como
+  apertura el cierre de ayer (que ya incluye los movimientos de ayer) y dejar
+  al lado los movimientos de toda la semana. El saldo sale bien y el
+  movimiento que se ve al lado es el del día anterior.
+- La resta puede no dar exacta si la fuente trae diferencias (ver Paso 1 bis
+  punto 5 del runbook). Esa diferencia se reporta en el chat y **no** se tapa
+  ajustando la apertura.
+
 ## **Paso 5 — Mismo nivel de detalle en cada ubicación**
 
 Para cada dato que aparezca en más de un lugar, el desglose debe ser **idéntico** en todas sus apariciones. Prohibido agrupar "para ahorrar espacio": es preferible un popover largo a ocultar un pago.
